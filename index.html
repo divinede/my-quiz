@@ -35,7 +35,13 @@
 
     #question {
       font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    #timer {
+      font-size: 1.1em;
       margin-bottom: 15px;
+      color: #ffeb3b;
     }
 
     .option {
@@ -98,12 +104,21 @@
       0% { transform: translateY(0) rotate(0); opacity: 1; }
       100% { transform: translateY(600px) rotate(720deg); opacity: 0; }
     }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5em; }
+      #question { font-size: 1.1em; }
+      #timer { font-size: 1em; }
+      .option { font-size: 0.95em; padding: 8px; }
+      #nextBtn { padding: 8px 16px; font-size: 0.9em; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🧠 Ultimate Quiz Challenge</h1>
     <div id="question"></div>
+    <div id="timer">⏱ Time Left: <span id="time">15</span>s</div>
     <div id="options"></div>
     <button id="nextBtn">Next</button>
     <div id="score"></div>
@@ -112,40 +127,22 @@
 
   <script>
     const quizData = [
-      // Easy
       { question: "What is 5 + 3?", options: ["5", "8", "9", "7"], answer: "8" },
       { question: "Which planet is known as the Red Planet?", options: ["Earth", "Mars", "Jupiter", "Saturn"], answer: "Mars" },
       { question: "What color is the sky on a clear day?", options: ["Blue", "Red", "Green", "Pink"], answer: "Blue" },
       { question: "How many days are in a leap year?", options: ["365", "366", "367", "364"], answer: "366" },
-      { question: "What is H2O commonly known as?", options: ["Oxygen", "Hydrogen", "Water", "Salt"], answer: "Water" },
-
-      // Medium
       { question: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "William Shakespeare", "J.K. Rowling", "Leo Tolstoy"], answer: "William Shakespeare" },
-      { question: "Which continent is the Sahara Desert in?", options: ["Asia", "Africa", "Europe", "Australia"], answer: "Africa" },
       { question: "What is the capital of Japan?", options: ["Tokyo", "Beijing", "Seoul", "Bangkok"], answer: "Tokyo" },
-      { question: "Which organ pumps blood through the body?", options: ["Lungs", "Heart", "Brain", "Kidneys"], answer: "Heart" },
-      { question: "Which gas do plants use for photosynthesis?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], answer: "Carbon Dioxide" },
-
-      // Hard
       { question: "What is the square root of 144?", options: ["10", "11", "12", "14"], answer: "12" },
+      { question: "Which gas do plants use for photosynthesis?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], answer: "Carbon Dioxide" },
       { question: "Who developed the theory of relativity?", options: ["Isaac Newton", "Albert Einstein", "Nikola Tesla", "Galileo"], answer: "Albert Einstein" },
-      { question: "What is the smallest prime number?", options: ["1", "2", "3", "0"], answer: "2" },
-      { question: "What is the chemical symbol for gold?", options: ["Gd", "Au", "Ag", "Go"], answer: "Au" },
-      { question: "Which planet has the most moons?", options: ["Earth", "Jupiter", "Saturn", "Uranus"], answer: "Saturn" },
-
-      // Expert
-      { question: "In computing, what does 'CPU' stand for?", options: ["Central Processing Unit", "Computer Personal Unit", "Central Performance Utility", "Core Program Unit"], answer: "Central Processing Unit" },
-      { question: "Which is the fastest land animal?", options: ["Cheetah", "Leopard", "Horse", "Gazelle"], answer: "Cheetah" },
-      { question: "Which year did World War II end?", options: ["1942", "1945", "1950", "1939"], answer: "1945" },
-      { question: "What is the hardest natural substance on Earth?", options: ["Iron", "Gold", "Diamond", "Platinum"], answer: "Diamond" },
-      { question: "Which element has the chemical symbol 'O'?", options: ["Oxygen", "Osmium", "Ozone", "Olivine"], answer: "Oxygen" },
-      { question: "Which planet is closest to the sun?", options: ["Venus", "Mercury", "Earth", "Mars"], answer: "Mercury" },
-      { question: "What is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Pacific", "Arctic"], answer: "Pacific" },
-      { question: "Who painted the Mona Lisa?", options: ["Van Gogh", "Leonardo da Vinci", "Michelangelo", "Picasso"], answer: "Leonardo da Vinci" }
+      { question: "What is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Pacific", "Arctic"], answer: "Pacific" }
     ];
 
     let currentQuestion = 0;
     let score = 0;
+    let timer;
+    let timeLeft = 15;
 
     const questionEl = document.getElementById("question");
     const optionsEl = document.getElementById("options");
@@ -153,8 +150,14 @@
     const scoreEl = document.getElementById("score");
     const emoji = document.getElementById("emoji");
     const container = document.querySelector(".container");
+    const timeDisplay = document.getElementById("time");
 
     function loadQuestion() {
+      clearInterval(timer);
+      timeLeft = 15;
+      timeDisplay.textContent = timeLeft;
+      startTimer();
+
       emoji.classList.remove("show");
       const q = quizData[currentQuestion];
       questionEl.textContent = q.question;
@@ -169,7 +172,19 @@
       nextBtn.style.display = "none";
     }
 
+    function startTimer() {
+      timer = setInterval(() => {
+        timeLeft--;
+        timeDisplay.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          autoNext();
+        }
+      }, 1000);
+    }
+
     function selectAnswer(selected) {
+      clearInterval(timer);
       const correct = quizData[currentQuestion].answer;
       if (selected === correct) {
         score++;
@@ -180,6 +195,18 @@
       nextBtn.style.display = "block";
     }
 
+    function autoNext() {
+      showFail();
+      setTimeout(() => {
+        currentQuestion++;
+        if (currentQuestion < quizData.length) {
+          loadQuestion();
+        } else {
+          showScore();
+        }
+      }, 800);
+    }
+
     function showSuccess() {
       emoji.textContent = "🎉";
       emoji.classList.add("show");
@@ -188,7 +215,7 @@
     }
 
     function showFail() {
-      emoji.textContent = "😂";
+      emoji.textContent = "⏰";
       emoji.classList.add("show");
       setTimeout(() => emoji.classList.remove("show"), 1000);
     }
@@ -206,6 +233,7 @@
     }
 
     nextBtn.onclick = () => {
+      clearInterval(timer);
       currentQuestion++;
       if (currentQuestion < quizData.length) {
         loadQuestion();
@@ -217,6 +245,7 @@
     function showScore() {
       questionEl.textContent = "🎉 Quiz Completed!";
       optionsEl.innerHTML = "";
+      document.getElementById("timer").style.display = "none";
       scoreEl.textContent = `Your score: ${score} / ${quizData.length}`;
       nextBtn.style.display = "none";
     }
